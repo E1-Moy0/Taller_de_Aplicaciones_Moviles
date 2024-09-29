@@ -1,0 +1,153 @@
+package com.example.as3_g7_temperatura;
+
+import android.Manifest;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.app.Service;
+import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.media.Ringtone;
+import android.media.RingtoneManager;
+import android.net.Uri;
+import android.os.Bundle;
+import android.os.Vibrator;
+import android.widget.TextView;
+
+import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
+
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
+public class MainActivity extends AppCompatActivity {
+    FirebaseDatabase database;
+    TextView infoData, textViewDistancia, textViewCosto, textViewMontoTotal;
+    FusedLocationProviderClient fusedLocationClient;
+    Vibrator vibrator;
+    Ringtone ringtone;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        EdgeToEdge.enable(this);
+        setContentView(R.layout.activity_main);
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            return insets;
+        });
+
+        infoData = findViewById(R.id.infoData);
+        textViewDistancia = findViewById(R.id.textView_distancia);
+        textViewCosto = findViewById(R.id.textView_costo);
+        textViewMontoTotal = findViewById(R.id.textView_montoTotal);
+
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+        vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+        Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
+        ringtone = RingtoneManager.getRingtone(getApplicationContext(), notification);
+
+        database = FirebaseDatabase.getInstance();
+        DatabaseReference valor = database.getReference("valor");
+
+        valor.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                double temperatura = snapshot.getValue(Double.class);
+                infoData.setText("Temperatura: " + temperatura + "°C");
+
+                if (temperatura > 4 || temperatura < -14) {
+                    vibrator.vibrate(500);
+                    ringtone.play();
+                } else {
+                    if (ringtone.isPlaying()) {
+                        ringtone.stop();
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                // Handle error
+            }
+        });
+
+        obtenerUbicacionYCalcularCosto();
+    }
+
+    private void obtenerUbicacionYCalcularCosto() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
+            return;
+        }
+
+        fusedLocationClient.getLastLocation().addOnSuccessListener(this, new OnSuccessListener<Location>() {
+            @Override
+            public void onSuccess(Location location) {
+                if (location != null) {
+                    double lat1 = location.getLatitude();
+                    double lon1 = location.getLongitude();
+
+                    // Coordenadas de la Plaza de Armas de Santiago, Chile (ejemplo)
+                    double lat2 = -33.4372;
+                    double lon2 = -70.6506;
+
+                    double distancia = calcularDistancia(lat1, lon1, lat2, lon2);
+                    textViewDistancia.setText("Distancia a Plaza de Armas: \n" + distancia + " km");
+
+                    // Obtener el monto total de la compra desde Firebase
+                    DatabaseReference compraRef = database.getReference("montoTotal");
+                    compraRef.addValueEventListener(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            double montoTotal = snapshot.getValue(Double.class);
+
+                            double costoDespacho;
+
+                            if (montoTotal >= 50000) {
+                                costoDespacho = 0;
+                            } else if (montoTotal >= 25000) {
+                                costoDespacho = distancia * 150;
+                            } else {
+                                costoDespacho = distancia * 300;
+                            }
+
+                            textViewCosto.setText("Costo de Despacho: \n" + costoDespacho + " pesos");
+                            textViewMontoTotal.setText("El total de su compra es: " + montoTotal + " pesos");
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+                        }
+                    });
+                }
+            }
+        });
+    }
+
+    private double calcularDistancia(double lat1, double lon1, double lat2, double lon2) {
+        double radioTierra = 6371; // Radio de la Tierra en kilómetros
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLon = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
+                        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return radioTierra * c;
+    }
+}
