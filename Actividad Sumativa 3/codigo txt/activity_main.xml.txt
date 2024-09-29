@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <TextView
+        android:id="@+id/infoData"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Hello World!"
+        android:textSize="34sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/textView_distancia"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Distancia a Plaza de Armas: 0 km"
+        android:textSize="18sp"
+        app:layout_constraintTop_toBottomOf="@+id/infoData"
+        app:layout_constraintBottom_toTopOf="@+id/textView_costo"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintVertical_bias="0.5"
+        android:gravity="center" />
+
+    <TextView
+        android:id="@+id/textView_montoTotal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="El total de su compra es: 0 pesos"
+        android:textSize="18sp"
+        app:layout_constraintTop_toBottomOf="@+id/textView_distancia"
+        app:layout_constraintBottom_toTopOf="@+id/textView_costo"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintVertical_bias="0.5"
+        android:layout_marginTop="16dp"
+        android:gravity="center" />
+
+    <TextView
+        android:id="@+id/textView_costo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Costo de Despacho: "
+        android:textSize="18sp"
+        app:layout_constraintTop_toBottomOf="@+id/textView_montoTotal"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="16dp"
+        android:gravity="center" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
