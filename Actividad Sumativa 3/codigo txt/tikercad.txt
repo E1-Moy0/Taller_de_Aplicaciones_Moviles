@@ -1,0 +1,56 @@
+int tempBase = 0;
+int celsius = 0;
+
+void setup()
+{
+  pinMode(A0, INPUT);
+  Serial.begin(9600);
+
+  pinMode(2, OUTPUT);
+  pinMode(3, OUTPUT);
+  pinMode(4, OUTPUT);
+}
+
+void loop()
+{
+  tempBase = 0;
+  
+  int sensorValue = analogRead(A0);
+  celsius = map(((analogRead(A0) - 20) * 3.04), 0, 1023, -40, 125);
+  
+  Serial.print(celsius);
+  Serial.println(" C");
+  
+  // Encender LEDs en base a la temperatura
+  if (celsius < tempBase) {
+    digitalWrite(2, LOW);
+    digitalWrite(3, LOW);
+    digitalWrite(4, LOW);
+    Serial.println("Temperatura normal");
+  }
+  if (celsius >= tempBase && celsius < tempBase + 1) {
+    digitalWrite(2, HIGH);
+    digitalWrite(3, LOW);
+    digitalWrite(4, LOW);
+    Serial.println("Temperura acercandose a limite");
+  }
+  if (celsius >= tempBase + 1 && celsius < tempBase + 2) {
+    digitalWrite(2, HIGH);
+    digitalWrite(3, HIGH);
+    digitalWrite(4, LOW);
+    Serial.println("Muy cerca de la temperatura limite");
+  }
+  if (celsius >= tempBase + 2 && celsius < tempBase + 3) {
+    digitalWrite(2, HIGH);
+    digitalWrite(3, HIGH);
+    digitalWrite(4, HIGH);
+    Serial.println("Temperatura sobre el limite");
+  }
+  if (celsius >= tempBase + 3) {
+    digitalWrite(2, HIGH);
+    digitalWrite(3, HIGH);
+    digitalWrite(4, HIGH);
+    Serial.println("Temperatura muy sobre el limite");
+  }
+  delay(1000); 
+}
